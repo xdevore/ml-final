@@ -48,9 +48,9 @@ def custom_generator(directory, target_size, batch_size, subset):
         labels = np.vstack((np.ones((len(rock_data), 1)), np.zeros((len(other_genres_data), 1))))
         yield data, labels
 
-data_path = "/homes/xdevore/ml-final/data/"
+data_path = "/homes/xdevore/ml-final-project/ml-final/data/train/"
 batch_size = 32
-
+#(288, 432)
 train_generator = custom_generator(data_path, target_size=(128, 128), batch_size=batch_size, subset="training")
 validation_generator = custom_generator(data_path, target_size=(128, 128), batch_size=batch_size, subset="validation")
 
@@ -87,9 +87,6 @@ history = model.fit(
     callbacks=[checkpoint]
 )
 
-_, train_accuracy = model.evaluate(X_train, y_train, verbose=0)
-_, test_accuracy = model.evaluate(X_test, y_test, verbose=0)
-print(f'Training accuracy: {train_accuracy:.3f}')
-print(f'Testing accuracy: {test_accuracy:.3f}')
+
 
 model.save('rock_genre_classifier.h5')

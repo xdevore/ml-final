@@ -1,44 +1,111 @@
-import tensorflow as tf
+
+
 import numpy as np
-import gzip
-import pickle
-from model import custom_generator
-# Load the pre-trained models
-model_0 = tf.keras.models.load_model('path/to/your/model_0_file.h5')
-model_1 = tf.keras.models.load_model('path/to/your/model_1_file.h5')
+from keras.preprocessing.image import ImageDataGenerator
+from keras.models import load_model, Model
+#----------------------just chill her for a sec while I figrue out what to do with your
+
+def custom_generator(directory, target_size, batch_size, subset):
+    datagen = ImageDataGenerator(rescale=1./255, validation_split=0.2)
+
+    rock_generator = datagen.flow_from_directory(
+        directory,
+        classes=['rock_test_specs'],
+        target_size=target_size,
+        color_mode="rgb",
+        batch_size=batch_size,
+        class_mode="binary",
+        subset=subset
+    )
+
+    other_genres_generators = []
+    other_genres_folders = ['house_test_specs', 'jazz_test_specs', 'rap_test_specs']
+
+    for genre in other_genres_folders:
+        genre_generator = datagen.flow_from_directory(
+            directory,
+            classes=[genre],
+            target_size=target_size,
+            color_mode="rgb",
+            batch_size=batch_size // len(other_genres_folders),
+            class_mode="binary",
+            subset=subset
+        )
+        other_genres_generators.append(genre_generator)
+
+    while True:
+        rock_data, _ = next(rock_generator)
+        other_genres_data = []
+
+        for genre_generator in other_genres_generators:
+            genre_data, _ = next(genre_generator)
+            other_genres_data.append(genre_data)
+
+        other_genres_data = np.vstack(other_genres_data)
+        data = np.vstack((rock_data, other_genres_data))
+        labels = np.vstack((np.ones((len(rock_data), 1)), np.zeros((len(other_genres_data), 1))))
+        yield data, labels
+
+#-----------------------------------------------------------
+# Assuming your pretrained CNN is saved as 'pretrained_cnn.h5'
+print("1")
+pretrained_cnn = load_model('rock_genre_classifier.h5')
+
+# Specify the layer name you want to get the activations from
+layer_name = 'conv2d_1'
+
+# Find the layer with the specified name
+print("2")
+layer_output = None
+for layer in pretrained_cnn.layers:
+    if layer.name == layer_name:
+        layer_output = layer.output
+        break
+
+if layer_output is None:
+    raise ValueError(f"Layer with name '{layer_name}' not found in the model.")
+
+# Create a new model that outputs the activations from the desired layer
+print("3")
+activation_model = Model(inputs=pretrained_cnn.input, outputs=layer_output)
+
+# Set your parameters
+directory = '/homes/xdevore/ml-final-project/ml-final/data/test/'
+target_size = (128, 128)
+batch_size = 1
+subset = 'validation'
 
 # Create the custom generator
-test_generator = custom_generator(test_dir, target_size, batch_size, 'validation')
+print("4")
+generator = custom_generator(directory, target_size, batch_size, subset)
 
-# Create a custom model to extract activations at the conv2 layer
-def get_intermediate_model(model, layer_name):
-    intermediate_layer_model = tf.keras.Model(inputs=model.input, outputs=model.get_layer(layer_name).output)
-    return intermediate_layer_model
-
-layer_name = 'name_of_your_conv2_layer'
-model_0_intermediate = get_intermediate_model(model_0, layer_name)
-model_1_intermediate = get_intermediate_model(model_1, layer_name)
-
-# Get activations for the test data using the generator
-acts1 = []
-acts2 = []
-num_batches = len(test_generator)
+# Run activations through the pretrained CNN on 1000 test examples
+activations = []
+num_batches = 100 // batch_size
+print("5")
 for i in range(num_batches):
-    batch_data, _ = next(test_generator)
-    batch_acts1 = model_0_intermediate.predict(batch_data)
-    batch_acts2 = model_1_intermediate.predict(batch_data)
-    acts1.append(batch_acts1)
-    acts2.append(batch_acts2)
+    data, labels = next(generator)
+    activation_batch = activation_model.predict(data)
+    activations.extend(activation_batch)
 
-# Concatenate activations from all batches
-acts1 = np.concatenate(acts1, axis=0)
-acts2 = np.concatenate(acts2, axis=0)
+# Stack activations on top of each other as a matrix
+activations_matrix = np.vstack(activations)
 
-# Save the activations
-with gzip.open("./model_activations/SVHN/model_0_lay03.p", "wb") as f:
-    pickle.dump(acts1, f)
-
-with gzip.open("./model_activations/SVHN/model_1_lay03.p", "wb") as f:
-    pickle.dump(acts2, f)
-
-print(acts1.shape, acts2.shape)
+# Save the activations matrix
+np.save('activations_matrix.npy', activations_matrix)
+# chunk_size = 50
+# num_chunks = num_batches // chunk_size
+#
+# for chunk in range(num_chunks):
+#     activations = []
+#
+#     for i in range(chunk_size):
+#         data, labels = next(generator)
+#         activation_batch = activation_model.predict(data)
+#         activations.extend(activation_batch)
+#     print("make it here")
+#     # Stack activations on top of each other as a matrix
+#     activations_matrix = np.vstack(activations)
+#
+#     # Save the activations matrix chunk
+#     np.save(f'activations_matrix_chunk_{chunk}.npy', activations_matrix)

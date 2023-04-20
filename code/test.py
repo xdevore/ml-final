@@ -5,7 +5,7 @@ from tensorflow.keras.models import load_model
 
 model = load_model('rock_genre_classifier.h5')
 
-test_data_path = 'path/to/your/separate/test/data'
+test_data_path = '/homes/xdevore/ml-final-project/ml-final/data/test/rock_test_specs'
 batch_size = 32
 
 test_generator = custom_generator(test_data_path, target_size=(128, 128), batch_size=batch_size, subset="test")

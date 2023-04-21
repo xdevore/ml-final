@@ -49,7 +49,7 @@ def custom_generator(directory, target_size, batch_size, subset):
 #-----------------------------------------------------------
 # Assuming your pretrained CNN is saved as 'pretrained_cnn.h5'
 print("1")
-pretrained_cnn = load_model('rock_genre_classifier5.h5')
+pretrained_cnn = load_model('rock_genre_classifier.h5')
 
 # Specify the layer name you want to get the activations from
 layer_name = 'conv2d_1'

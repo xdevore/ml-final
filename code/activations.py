@@ -49,7 +49,7 @@ def custom_generator(directory, target_size, batch_size, subset):
 #-----------------------------------------------------------
 # Assuming your pretrained CNN is saved as 'pretrained_cnn.h5'
 print("1")
-pretrained_cnn = load_model('rock_genre_classifier.h5')
+pretrained_cnn = load_model('rock_genre_classifier5.h5')
 
 # Specify the layer name you want to get the activations from
 layer_name = 'conv2d_1'
@@ -61,7 +61,7 @@ for layer in pretrained_cnn.layers:
     if layer.name == layer_name:
         layer_output = layer.output
         break
-
+print("output shape of single",layer_output.shape)
 if layer_output is None:
     raise ValueError(f"Layer with name '{layer_name}' not found in the model.")
 
@@ -71,7 +71,7 @@ activation_model = Model(inputs=pretrained_cnn.input, outputs=layer_output)
 
 # Set your parameters
 directory = '/homes/xdevore/ml-final-project/ml-final/data/test/'
-target_size = (128, 128)
+target_size = (64, 192)
 batch_size = 1
 subset = 'validation'
 
@@ -81,7 +81,7 @@ generator = custom_generator(directory, target_size, batch_size, subset)
 
 # Run activations through the pretrained CNN on 1000 test examples
 activations = []
-num_batches = 100 // batch_size
+num_batches = 500 // batch_size
 print("5")
 for i in range(num_batches):
     data, labels = next(generator)
@@ -92,7 +92,7 @@ for i in range(num_batches):
 activations_matrix = np.vstack(activations)
 
 # Save the activations matrix
-np.save('activations_matrix.npy', activations_matrix)
+np.save('activations_matrix_rock4.npy', activations_matrix)
 # chunk_size = 50
 # num_chunks = num_batches // chunk_size
 #

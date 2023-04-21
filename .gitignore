@@ -27,9 +27,6 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# data
-data/
-
 # huge files
 *.npy
 

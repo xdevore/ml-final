@@ -1,19 +1,48 @@
 import os
 import numpy as np
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import tensorflow as tf
 from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
 
-model = load_model('rock_genre_classifier.h5')
+# Load the pre-trained model
+model = load_model('rock_genre_classifier5.h5')
+print(model.summary())
+# Define image dimensions and genre folders
+IMG_HEIGHT = 64
+IMG_WIDTH = 192
+genre_folders = ['house_test_specs', 'jazz_test_specs', 'rap_test_specs', 'rock_test_specs']
 
-test_data_path = '/homes/xdevore/ml-final-project/ml-final/data/test/rock_test_specs'
-batch_size = 32
+# Define test data folder
+test_data_folder = '/homes/xdevore/ml-final-project/ml-final/data/test'
 
-test_generator = custom_generator(test_data_path, target_size=(128, 128), batch_size=batch_size, subset="test")
+# Function to preprocess the spectrograms
+def preprocess_spectrogram(img_path):
+    img = image.load_img(img_path, target_size=(IMG_HEIGHT, IMG_WIDTH))
+    img_array = image.img_to_array(img)
+    img_array = np.expand_dims(img_array, axis=0)
+    img_array /= 255.0
+    return img_array
 
-other_genres_folders = ['house', 'jazz', 'rap']
-other_genres_count = sum([len(os.listdir(os.path.join(test_data_path, genre))) for genre in other_genres_folders])
-rock_count = len(os.listdir(os.path.join(test_data_path, 'rock')))
-test_steps = (rock_count + other_genres_count) // (batch_size * 2)
+# Initialize variables to track correct predictions and total predictions
+correct_predictions = 0
+total_predictions = 0
 
-test_loss, test_accuracy = model.evaluate(test_generator, steps=test_steps)
-print(f"Test loss: {test_loss}, Test accuracy: {test_accuracy}")
+# Test the model on each genre
+for genre in genre_folders:
+    genre_folder = os.path.join(test_data_folder, genre)
+    for img_file in os.listdir(genre_folder):
+        img_path = os.path.join(genre_folder, img_file)
+        img_array = preprocess_spectrogram(img_path)
+
+        prediction = model.predict(img_array)
+        is_rock = prediction[0][0] > 0.5
+
+        if genre == 'rock_test_specs' and is_rock:
+            correct_predictions += 1
+        elif genre != 'rock_test_specs' and not is_rock:
+            correct_predictions += 1
+        total_predictions += 1
+
+# Calculate accuracy
+accuracy = correct_predictions / total_predictions
+print(f"Accuracy: {accuracy * 100:.2f}%")

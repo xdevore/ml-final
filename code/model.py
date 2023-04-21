@@ -51,10 +51,10 @@ def custom_generator(directory, target_size, batch_size, subset):
 data_path = "/homes/xdevore/ml-final-project/ml-final/data/train/"
 batch_size = 32
 #(288, 432)
-train_generator = custom_generator(data_path, target_size=(128, 128), batch_size=batch_size, subset="training")
-validation_generator = custom_generator(data_path, target_size=(128, 128), batch_size=batch_size, subset="validation")
+train_generator = custom_generator(data_path, target_size=(64, 192), batch_size=batch_size, subset="training")
+validation_generator = custom_generator(data_path, target_size=(64, 192), batch_size=batch_size, subset="validation")
 
-other_genres_folders = ['house_specs', 'jazz_specs', 'rap_specs']
+other_genres_folders = ['house_specs', 'jazz_specs','rap_specs']
 other_genres_count = sum([len(os.listdir(os.path.join(data_path, genre))) for genre in other_genres_folders])
 rock_count = len(os.listdir(os.path.join(data_path, 'rock_specs')))
 
@@ -62,7 +62,7 @@ train_steps_per_epoch = (rock_count + other_genres_count) // (batch_size * 2)
 validation_steps = train_steps_per_epoch // 5
 
 model = Sequential()
-model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(128, 128, 3)))
+model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(64, 192, 3)))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Conv2D(64, (3, 3), activation='relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
@@ -83,10 +83,10 @@ history = model.fit(
     steps_per_epoch=train_steps_per_epoch,
     validation_data=validation_generator,
     validation_steps=validation_steps,
-    epochs=1,
+    epochs=3,
     callbacks=[checkpoint]
 )
 
 
 
-model.save('rock_genre_classifier.h5')
+model.save('rock_genre_classifier4.h5')

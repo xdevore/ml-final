@@ -6,7 +6,7 @@ from __future__ import print_function
 import numpy as np
 import os, sys
 from matplotlib import pyplot as plt
-%matplotlib inline
+#%matplotlib inline
 import time
 import pickle
 import pandas
@@ -15,7 +15,7 @@ import gzip
 num_cca_trials = 5
 
 def positivedef_matrix_sqrt(array):
- 
+
   w, v = np.linalg.eigh(array)
   #  A - np.dot(v, np.dot(np.diag(w), v.T))
   wsqrt = np.sqrt(w)
@@ -42,7 +42,7 @@ def remove_small(sigma_xx, sigma_xy, sigma_yx, sigma_yy, epsilon):
 
 def compute_ccas(sigma_xx, sigma_xy, sigma_yx, sigma_yy, epsilon,
                  verbose=True):
- 
+
 
   (sigma_xx, sigma_xy, sigma_yx, sigma_yy,
    x_idxs, y_idxs) = remove_small(sigma_xx, sigma_xy, sigma_yx, sigma_yy, epsilon)
@@ -90,7 +90,7 @@ def sum_threshold(array, threshold):
 
 
 def create_zero_dict(compute_dirns, dimension):
- 
+
   return_dict = {}
   return_dict["mean"] = (np.asarray(0), np.asarray(0))
   return_dict["sum"] = (np.asarray(0), np.asarray(0))
@@ -147,7 +147,7 @@ def get_cca_similarity(acts1, acts2, epsilon=0., threshold=0.98,
     return create_zero_dict(compute_dirns, acts1.shape[1])
 
   if compute_coefs:
-    
+
     # also compute full coefficients over all neurons
     x_mask = np.dot(x_idxs.reshape((-1, 1)), x_idxs.reshape((1, -1)))
     y_mask = np.dot(y_idxs.reshape((-1, 1)), y_idxs.reshape((1, -1)))
@@ -160,7 +160,7 @@ def get_cca_similarity(acts1, acts2, epsilon=0., threshold=0.98,
     return_dict["full_invsqrt_xx"] = np.zeros((numx, numx))
     np.place(return_dict["full_invsqrt_xx"], x_mask,
              return_dict["invsqrt_xx"])
-    
+
     return_dict["coef_y"] = v
     return_dict["invsqrt_yy"] = invsqrt_yy
     return_dict["full_coef_y"] = np.zeros((numy, numy))
@@ -233,10 +233,12 @@ def _plot_helper(arr, xlabel, ylabel):
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.grid()
+    plt.savefig("rap_and_rock.png")
+    plt.show()
 
 def cutoff(s):
     total_variance = np.sum(s)
-    desired_variance_fraction = 0.99
+    desired_variance_fraction = 0.8
     cumulative_variance = 0
     cutoff_index = -1
     for idx, singular_value in enumerate(s):
@@ -251,13 +253,27 @@ def cutoff(s):
 #     acts1 = pickle.load(f)
 # with gzip.open("./model_activations/SVHN/model_1_lay03.p", "rb") as f:
 #     acts2 = pickle.load(f)
+def load_npy_file(filename):
+    try:
+        array = np.load(filename)
+        print(f"Loaded {filename} successfully")
+        return array
+    except Exception as e:
+        print(f"Error loading {filename}: {e}")
+
+filename1 = "activations_matrix_rock4.npy"
+filename2 = "activations_matrix_rock5.npy"
+
+# Load .npy files as NumPy arrays
+acts1 = load_npy_file(filename1)
+acts2 = load_npy_file(filename2)
 
 # Reshape activations
-num_datapoints, h, w, channels = acts1.shape
-f_acts1 = acts1.reshape((num_datapoints*h*w, channels))
+num_datapoints, h, channels = acts1.shape
+f_acts1 = acts1.reshape((num_datapoints*h, channels))
 f_acts1 = f_acts1.T[:,::2]
-num_datapoints, h, w, channels = acts2.shape
-f_acts2 = acts2.reshape((num_datapoints*h*w, channels))
+num_datapoints, h, channels = acts2.shape
+f_acts2 = acts2.reshape((num_datapoints*h, channels))
 f_acts2= f_acts2.T[:,::2]
 
 print(f_acts1.shape, f_acts2.shape)
@@ -270,12 +286,12 @@ cacts2 = f_acts2 - np.mean(f_acts2, axis=1, keepdims=True)
 U1, s1, V1 = np.linalg.svd(cacts1, full_matrices=False)
 U2, s2, V2 = np.linalg.svd(cacts2, full_matrices=False)
 
-# Use this to get the cutoff point for our data - 99% variance
+# Use this to get the cutoff point forbest_model.h our data - 99% variance
 cutoff_acts1 = cutoff(s1)
 cutoff_acts2 = cutoff(s2)
 print(len(s1))
-print(cutoff_acts1)
-print(cutoff_acts2)
+print("cutoofffff 1",cutoff_acts1)
+print("cutoff2",cutoff_acts2)
 
 # Compute svacts1 and svacts2
 svacts1 = np.dot(np.diag(s1[:cutoff_acts1]), V1[:cutoff_acts1])

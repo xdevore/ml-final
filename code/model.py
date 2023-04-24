@@ -12,7 +12,7 @@ def custom_generator(directory, target_size, batch_size, subset):
 
     rock_generator = datagen.flow_from_directory(
         directory,
-        classes=['rock_specs'],
+        classes=['house_specs'],
         target_size=target_size,
         color_mode="rgb",
         batch_size=batch_size,
@@ -21,7 +21,7 @@ def custom_generator(directory, target_size, batch_size, subset):
     )
 
     other_genres_generators = []
-    other_genres_folders = ['house_specs', 'jazz_specs', 'rap_specs']
+    other_genres_folders = ['rock_specs', 'jazz_specs', 'rap_specs']
 
     for genre in other_genres_folders:
         genre_generator = datagen.flow_from_directory(
@@ -54,9 +54,9 @@ batch_size = 32
 train_generator = custom_generator(data_path, target_size=(64, 192), batch_size=batch_size, subset="training")
 validation_generator = custom_generator(data_path, target_size=(64, 192), batch_size=batch_size, subset="validation")
 
-other_genres_folders = ['house_specs', 'jazz_specs','rap_specs']
+other_genres_folders = ['rock_specs', 'jazz_specs','rap_specs']
 other_genres_count = sum([len(os.listdir(os.path.join(data_path, genre))) for genre in other_genres_folders])
-rock_count = len(os.listdir(os.path.join(data_path, 'rock_specs')))
+rock_count = len(os.listdir(os.path.join(data_path, 'house_specs')))
 
 train_steps_per_epoch = (rock_count + other_genres_count) // (batch_size * 2)
 validation_steps = train_steps_per_epoch // 5
@@ -83,10 +83,10 @@ history = model.fit(
     steps_per_epoch=train_steps_per_epoch,
     validation_data=validation_generator,
     validation_steps=validation_steps,
-    epochs=3,
+    epochs=5,
     callbacks=[checkpoint]
 )
 
 
 
-model.save('rock_genre_classifier4.h5')
+model.save('house_genre_classifier.h5')

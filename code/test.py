@@ -4,8 +4,11 @@ import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 
+# Set the environment variable to run the code on CPU
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
 # Load the pre-trained model
-model = load_model('rock_genre_classifier5.h5')
+model = load_model('rock_genre_classifier4.h5')
 print(model.summary())
 # Define image dimensions and genre folders
 IMG_HEIGHT = 64

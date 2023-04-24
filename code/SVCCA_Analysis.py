@@ -238,7 +238,7 @@ def _plot_helper(arr, xlabel, ylabel):
 
 def cutoff(s):
     total_variance = np.sum(s)
-    desired_variance_fraction = 0.8
+    desired_variance_fraction = 0.99
     cumulative_variance = 0
     cutoff_index = -1
     for idx, singular_value in enumerate(s):
@@ -247,6 +247,32 @@ def cutoff(s):
             cutoff_index = idx
             break
     return cutoff_index
+def graph_top_svcca_directions(svcca_results, top_n=3):
+    # Get the top_n CCA coefficients
+    print(svcca_results["cca_coef1"].shape)
+    top_n_coeffs = svcca_results["cca_coef1"][:top_n]
+
+    # Get the corresponding CCA directions for both activation sets
+    top_n_dirns1 = svcca_results["cca_dirns1"][:, :top_n]
+    top_n_dirns2 = svcca_results["cca_dirns2"][:, :top_n]
+
+    # Plot the top_n CCA directions for both activation sets
+    for i in range(top_n):
+        plt.figure()
+        plt.plot(top_n_dirns1[:, i], label=f"Direction {i+1} - Acts1")
+        plt.plot(top_n_dirns2[:, i], label=f"Direction {i+1} - Acts2")
+        plt.xlabel("Data Index")
+        plt.ylabel("Neuron Activation")
+        plt.legend()
+        plt.title(f"Top {i+1} SVCCA Direction")
+        plt.grid()
+        plt.show()
+
+
+
+# Call the new function with the computed svcca_results
+
+
 
 # Load your activations (acts1 and acts2)
 # with gzip.open("./model_activations/SVHN/model_0_lay03.p", "rb") as f:
@@ -261,19 +287,19 @@ def load_npy_file(filename):
     except Exception as e:
         print(f"Error loading {filename}: {e}")
 
-filename1 = "activations_matrix_rock4.npy"
-filename2 = "activations_matrix_rock5.npy"
+filename1 = "activations_matrix_rock2.npy"
+filename2 = "activations_matrix_rock.npy"
 
 # Load .npy files as NumPy arrays
 acts1 = load_npy_file(filename1)
 acts2 = load_npy_file(filename2)
 
 # Reshape activations
-num_datapoints, h, channels = acts1.shape
-f_acts1 = acts1.reshape((num_datapoints*h, channels))
+num_datapoints, h, w, channels = acts1.shape
+f_acts1 = acts1.reshape((num_datapoints*h*w, channels))
 f_acts1 = f_acts1.T[:,::2]
-num_datapoints, h, channels = acts2.shape
-f_acts2 = acts2.reshape((num_datapoints*h, channels))
+num_datapoints, h, w, channels = acts2.shape
+f_acts2 = acts2.reshape((num_datapoints*h*w, channels))
 f_acts2= f_acts2.T[:,::2]
 
 print(f_acts1.shape, f_acts2.shape)
@@ -299,7 +325,12 @@ svacts2 = np.dot(np.diag(s2[:cutoff_acts2]), V2[:cutoff_acts2])
 print(svacts1.shape)
 
 # Compute SVCCA similarity
-svcca_results = get_cca_similarity(svacts1, svacts2, epsilon=1e-10, verbose=False)
+svcca_results = get_cca_similarity(svacts1, svacts2, epsilon=1e-10, compute_dirns=True, verbose=False)
+print("SVCCA shape", svcca_results["cca_dirns1"].shape)
+
+graph_top_svcca_directions(svcca_results)
+
+
 
 print("MNIST", np.mean(svcca_results["cca_coef1"]))
 

@@ -95,7 +95,7 @@ print("5")
 for i in range(num_batches):
 
     data, labels = next(generator)
-
+    print("the data hasss this shape", data.shape)
     activation_batch1 = activation_model1.predict(data)
     activation_batch2 = activation_model2.predict(data)
     activations1.append(activation_batch1.tolist())

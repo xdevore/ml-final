@@ -12,6 +12,9 @@ import pickle
 import pandas
 import gzip
 
+import seaborn as sns
+
+
 num_cca_trials = 5
 
 def positivedef_matrix_sqrt(array):
@@ -247,6 +250,56 @@ def cutoff(s):
             cutoff_index = idx
             break
     return cutoff_index
+
+def load_npy_file(filename):
+    try:
+        array = np.load(filename)
+        print(f"Loaded {filename} successfully")
+        return array
+    except Exception as e:
+        print(f"Error loading {filename}: {e}")
+
+
+def process_data(acts1,acts2):
+
+
+    # Reshape activations
+    num_datapoints, h, w, channels = acts1.shape
+    f_acts1 = acts1.reshape((num_datapoints*h*w, channels))
+    f_acts1 = f_acts1.T[:,::2]
+    num_datapoints, h, w, channels = acts2.shape
+    f_acts2 = acts2.reshape((num_datapoints*h*w, channels))
+    f_acts2= f_acts2.T[:,::2]
+
+    print(f_acts1.shape, f_acts2.shape)
+    return f_acts1, f_acts2
+
+def get_SVCCA(f_acts1,f_acts2):
+    # Mean subtract reshaped activations
+    cacts1 = f_acts1 - np.mean(f_acts1, axis=1, keepdims=True)
+    cacts2 = f_acts2 - np.mean(f_acts2, axis=1, keepdims=True)
+
+    # Perform SVD
+    U1, s1, V1 = np.linalg.svd(cacts1, full_matrices=False)
+    U2, s2, V2 = np.linalg.svd(cacts2, full_matrices=False)
+
+    # Use this to get the cutoff point forbest_model.h our data - 99% variance
+    cutoff_acts1 = cutoff(s1)
+    cutoff_acts2 = cutoff(s2)
+    print(len(s1))
+    print("cutoofffff 1",cutoff_acts1)
+    print("cutoff2",cutoff_acts2)
+
+    # Compute svacts1 and svacts2
+    svacts1 = np.dot(np.diag(s1[:cutoff_acts1]), V1[:cutoff_acts1])
+    svacts2 = np.dot(np.diag(s2[:cutoff_acts2]), V2[:cutoff_acts2])
+    print(svacts1.shape)
+    svcca_results = get_cca_similarity(svacts1, svacts2, epsilon=1e-10, compute_dirns=True, verbose=False)
+    # Compute SVCCA similarity
+    return svcca_results
+
+
+
 def graph_top_svcca_directions(svcca_results, top_n=3):
     # Get the top_n CCA coefficients
     print(svcca_results["cca_coef1"].shape)
@@ -268,71 +321,60 @@ def graph_top_svcca_directions(svcca_results, top_n=3):
         plt.grid()
         plt.show()
 
+def run_tests_all(files):
+    num_activations = len(files)
+    svcca_coeffs = np.zeros((num_activations, num_activations))
+
+    for i in range(num_activations):
+        activations1 = load_npy_file(files[i])
+        accmid =activations1
+        for j in range(i, num_activations):
+
+            activations2 = load_npy_file(files[j])
+            print("acts 1 shape", accmid.shape, activations2.shape)
+            activations1, activations2 = process_data(accmid,activations2)
+            coeff = get_SVCCA(activations1,activations2)
+            svcca_coeffs[i, j] = np.mean(coeff["cca_coef1"])
+            svcca_coeffs[j, i] = np.mean(coeff["cca_coef1"])
+    middle_parts = []
+    for file in files:
+        parts = file.split("_")
+        middle_part = parts[2].split(".")[0]
+        middle_parts.append(middle_part)
+# Create a heatmap of the SVCCA coefficients
+    ax = sns.heatmap(svcca_coeffs, annot=True, cmap="coolwarm", xticklabels=middle_parts, yticklabels=middle_parts)
+    plt.title("SVCCA Coefficients Heatmap")
+    plt.xlabel("Activations")
+    plt.ylabel("Activations")
+    plt.show()
+    return svcca_coeffs
 
 
-# Call the new function with the computed svcca_results
+file_names = ["activations_matrix_house.npy","activations_matrix_rap.npy","activations_matrix_rock.npy","activations_matrix_rock1.npy"]
+filename1 = "activations_matrix_rock.npy"
+filename2 = "activations_matrix_rock1.npy"
+
+act1 = load_npy_file(filename1)
+act2 = load_npy_file(filename2)
 
 
+f_acts1, f_acts2 = process_data(act1,act2)
 
-# Load your activations (acts1 and acts2)
-# with gzip.open("./model_activations/SVHN/model_0_lay03.p", "rb") as f:
-#     acts1 = pickle.load(f)
-# with gzip.open("./model_activations/SVHN/model_1_lay03.p", "rb") as f:
-#     acts2 = pickle.load(f)
-def load_npy_file(filename):
-    try:
-        array = np.load(filename)
-        print(f"Loaded {filename} successfully")
-        return array
-    except Exception as e:
-        print(f"Error loading {filename}: {e}")
+svcca_results = get_SVCCA(f_acts1,f_acts2)
+#
+# # Load .npy files as NumPy arrays
+#
+#
+#
+# print("SVCCA shape", svcca_results["cca_dirns1"].shape)
+#
+# graph_top_svcca_directions(svcca_results)
 
-filename1 = "activations_matrix_rock2.npy"
-filename2 = "activations_matrix_rock.npy"
 
-# Load .npy files as NumPy arrays
-acts1 = load_npy_file(filename1)
-acts2 = load_npy_file(filename2)
-
-# Reshape activations
-num_datapoints, h, w, channels = acts1.shape
-f_acts1 = acts1.reshape((num_datapoints*h*w, channels))
-f_acts1 = f_acts1.T[:,::2]
-num_datapoints, h, w, channels = acts2.shape
-f_acts2 = acts2.reshape((num_datapoints*h*w, channels))
-f_acts2= f_acts2.T[:,::2]
-
-print(f_acts1.shape, f_acts2.shape)
-
-# Mean subtract reshaped activations
-cacts1 = f_acts1 - np.mean(f_acts1, axis=1, keepdims=True)
-cacts2 = f_acts2 - np.mean(f_acts2, axis=1, keepdims=True)
-
-# Perform SVD
-U1, s1, V1 = np.linalg.svd(cacts1, full_matrices=False)
-U2, s2, V2 = np.linalg.svd(cacts2, full_matrices=False)
-
-# Use this to get the cutoff point forbest_model.h our data - 99% variance
-cutoff_acts1 = cutoff(s1)
-cutoff_acts2 = cutoff(s2)
-print(len(s1))
-print("cutoofffff 1",cutoff_acts1)
-print("cutoff2",cutoff_acts2)
-
-# Compute svacts1 and svacts2
-svacts1 = np.dot(np.diag(s1[:cutoff_acts1]), V1[:cutoff_acts1])
-svacts2 = np.dot(np.diag(s2[:cutoff_acts2]), V2[:cutoff_acts2])
-print(svacts1.shape)
-
-# Compute SVCCA similarity
-svcca_results = get_cca_similarity(svacts1, svacts2, epsilon=1e-10, compute_dirns=True, verbose=False)
-print("SVCCA shape", svcca_results["cca_dirns1"].shape)
-
-graph_top_svcca_directions(svcca_results)
-
+run_tests_all(file_names)
 
 
 print("MNIST", np.mean(svcca_results["cca_coef1"]))
-
-# Plot the results
-_plot_helper(svcca_results["cca_coef1"], "CCA Coef idx", "CCA coef value")
+#
+# # Plot the results
+# _plot_helper(svcca_results["cca_coef1"], "CCA Coef idx", "CCA coef value")

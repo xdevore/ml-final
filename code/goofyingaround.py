@@ -74,7 +74,7 @@ pretrained_cnn1 = load_model('rock_genre_classifier2.h5')
 pretrained_cnn2 = load_model('rock_genre_classifier.h5')
 
 folder_paths = ['../data/test/house_test_specs', '../data/test/rap_test_specs', '../data/test/rock_test_specs', '../data/test/jazz_test_specs']
-num_files = 100
+num_files = 2
 directory = '/homes/xdevore/ml-final-project/ml-final/data/test/'
 # Get 100 random files from each folder
 selected_files = []
@@ -96,4 +96,4 @@ for cnn in pretrained_cnns:
     activations_matrix = np.vstack(activations)
     file_split = cnn.split("_")
     new_file_name = file_split[0]
-    np.save('activations_matrix_' + new_file_name + '.npy', activations_matrix)
+    np.save('/homes/areichard/Desktop/ml-final/layer_activations/activations_matrix_' + new_file_name + '.npy', activations_matrix)

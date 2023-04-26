@@ -324,7 +324,7 @@ def graph_top_svcca_directions(svcca_results, top_n=3):
 def run_tests_all(files):
     num_activations = len(files)
     svcca_coeffs = np.zeros((num_activations, num_activations))
-
+    print("these are the files", files)
     for i in range(num_activations):
         activations1 = load_npy_file(files[i])
         accmid =activations1
@@ -347,21 +347,32 @@ def run_tests_all(files):
     plt.xlabel("Activations")
     plt.ylabel("Activations")
     plt.show()
+    plt.savefig('heatmap.png')
     return svcca_coeffs
 
 
-file_names = ["activations_matrix_house.npy","activations_matrix_rap.npy","activations_matrix_rock.npy","activations_matrix_rock1.npy"]
+#file_names = ["activations_matrix_house.npy","activations_matrix_rap.npy","activations_matrix_rock.npy","activations_matrix_rock1.npy"]
 filename1 = "activations_matrix_rock.npy"
 filename2 = "activations_matrix_rock1.npy"
 
-act1 = load_npy_file(filename1)
-act2 = load_npy_file(filename2)
+activation_path ='/homes/areichard/Desktop/ml-final/layer_activations/'
+pretraining = os.listdir(activation_path)
+file_names = []
+
+for i in pretraining:
+    file_names.append(activation_path + i)
 
 
-f_acts1, f_acts2 = process_data(act1,act2)
-
-svcca_results = get_SVCCA(f_acts1,f_acts2)
+# act1 = load_npy_file(filename1)
+# act2 = load_npy_file(filename2)
 #
+#
+# f_acts1, f_acts2 = process_data(act1,act2)
+#
+# svcca_results = get_SVCCA(f_acts1,f_acts2)
+#
+
+
 # # Load .npy files as NumPy arrays
 #
 #

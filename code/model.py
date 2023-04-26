@@ -12,7 +12,7 @@ data_path = "/homes/xdevore/ml-final-project/ml-final/data/train/"
 batch_size = 32
 #(288, 432)
 
-genre_list = ["rock", "house", "rap", "jazz"]
+genre_list = ["house", "rap", "jazz"]
 
 for genre in genre_list:
     
@@ -53,14 +53,16 @@ for genre in genre_list:
 
         model.compile(optimizer=Adam(learning_rate=0.0001), loss='binary_crossentropy', metrics=['accuracy'])
 
-        checkpoint = ModelCheckpoint('best_model_{}.h5'.format(i), save_best_only=True, monitor='val_accuracy', mode='max', verbose=1)
+        model_name = genre + '_best_model_' + str(i) + '.h5'
+
+        checkpoint = ModelCheckpoint(model_name, save_best_only=True, monitor='val_accuracy', mode='max', verbose=1)
 
         history = model.fit(
             train_generator,
             steps_per_epoch=train_steps_per_epoch,
             validation_data=validation_generator,
             validation_steps=validation_steps,
-            epochs=7,
+            epochs=11,
             callbacks=[checkpoint]
         )
 

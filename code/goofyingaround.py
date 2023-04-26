@@ -32,11 +32,11 @@ def get_layer(model_file, layer_name):
 
     layer_output = None
 
-    for layer_cnn in model.layers:
-        if layer_cnn.name == layer_name:
+    right_layer = model.layers[2]
 
-            layer_output = layer_cnn.output
-            break
+
+    layer_output = right_layer.output
+
 
 
     if layer_output is None:
@@ -67,14 +67,21 @@ def process_file(file_path,size):
     image = np.expand_dims(image, axis=0)
 
     return image
+models_path ='/homes/areichard/Desktop/ml-final/models/'
+pretraining = os.listdir(models_path)
+pretrained_cnns = []
 
-pretrained_cnns = ['house_genre_classifier.h5','rap_genre_classifier.h5','rock_genre_classifier.h5','rock_genre_classifier2.h5']
+for i in pretraining:
+    pretrained_cnns.append(models_path + i)
+print(pretrained_cnns)
+
+
 
 pretrained_cnn1 = load_model('rock_genre_classifier2.h5')
 pretrained_cnn2 = load_model('rock_genre_classifier.h5')
 
 folder_paths = ['../data/test/house_test_specs', '../data/test/rap_test_specs', '../data/test/rock_test_specs', '../data/test/jazz_test_specs']
-num_files = 2
+num_files = 100
 directory = '/homes/xdevore/ml-final-project/ml-final/data/test/'
 # Get 100 random files from each folder
 selected_files = []
@@ -82,18 +89,22 @@ for folder_path in folder_paths:
     selected_files.extend(get_random_files(folder_path, num_files))
 
 # Specify the layer name you want to get the activations from
-layer_name = 'conv2d_1'
+layer_name = 'conv2d_'
+layer_num = -2
 target_size = (64, 192)
 for cnn in pretrained_cnns:
+    layer_num = layer_num +3
     for file in selected_files:
 
 
         p_file = process_file(file, target_size)
-        activation_layer = get_layer(cnn, layer_name)
+        activation_layer = get_layer(cnn, layer_name + str(layer_num))
         activations = activation_maker(activation_layer,p_file)
 
     activations = np.array(activations)
     activations_matrix = np.vstack(activations)
-    file_split = cnn.split("_")
+    split_path = cnn.split("/")
+    file_split = split_path[6].split("_")
     new_file_name = file_split[0]
-    np.save('/homes/areichard/Desktop/ml-final/layer_activations/activations_matrix_' + new_file_name + '.npy', activations_matrix)
+
+    np.save('/homes/areichard/Desktop/ml-final/layer_activations/activations_matrix_' + new_file_name + cnn[-4], activations_matrix)

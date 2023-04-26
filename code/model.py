@@ -12,10 +12,10 @@ data_path = "/homes/xdevore/ml-final-project/ml-final/data/train/"
 batch_size = 32
 #(288, 432)
 
-genre_list = ["house", "rap", "jazz"]
+genre_list = ["rock", "house", "rap", "jazz"]
 
 for genre in genre_list:
-    
+
     specified_genre = genre
     genres_folders = ['house_specs', 'jazz_specs', 'rap_specs', 'rock_specs']
     specified_genre_specs_folder = ""

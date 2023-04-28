@@ -11,9 +11,9 @@ import time
 import pickle
 import pandas
 import gzip
-
+from scipy.stats import pearsonr
 import seaborn as sns
-
+from scipy.spatial.distance import cosine
 
 num_cca_trials = 5
 
@@ -283,16 +283,18 @@ def get_SVCCA(f_acts1,f_acts2):
     U1, s1, V1 = np.linalg.svd(cacts1, full_matrices=False)
     U2, s2, V2 = np.linalg.svd(cacts2, full_matrices=False)
 
+
     # Use this to get the cutoff point forbest_model.h our data - 99% variance
     cutoff_acts1 = cutoff(s1)
     cutoff_acts2 = cutoff(s2)
-    print(len(s1))
-    print("cutoofffff 1",cutoff_acts1)
-    print("cutoff2",cutoff_acts2)
+
 
     # Compute svacts1 and svacts2
-    svacts1 = np.dot(np.diag(s1[:cutoff_acts1]), V1[:cutoff_acts1])
-    svacts2 = np.dot(np.diag(s2[:cutoff_acts2]), V2[:cutoff_acts2])
+    # svacts1 = np.dot(np.diag(s1[:cutoff_acts1]), V1[:cutoff_acts1])
+    # svacts2 = np.dot(np.diag(s2[:cutoff_acts2]), V2[:cutoff_acts2])
+
+    svacts1 = np.dot(np.diag(s1), V1)
+    svacts2 = np.dot(np.diag(s2), V2)
     print(svacts1.shape)
     svcca_results = get_cca_similarity(svacts1, svacts2, epsilon=1e-10, compute_dirns=True, verbose=False)
     # Compute SVCCA similarity
@@ -331,7 +333,7 @@ def run_tests_all(files):
         for j in range(i, num_activations):
 
             activations2 = load_npy_file(files[j])
-            print("acts 1 shape", accmid.shape, activations2.shape)
+
             activations1, activations2 = process_data(accmid,activations2)
             coeff = get_SVCCA(activations1,activations2)
             svcca_coeffs[i, j] = np.mean(coeff["cca_coef1"])
@@ -339,8 +341,8 @@ def run_tests_all(files):
     middle_parts = []
     for file in files:
         parts = file.split("_")
-        middle_part = parts[2].split(".")[0]
-        middle_parts.append(middle_part)
+        name = parts[3] +"_"+parts[5]
+        middle_parts.append(name)
 # Create a heatmap of the SVCCA coefficients
     ax = sns.heatmap(svcca_coeffs, annot=True, cmap="coolwarm", xticklabels=middle_parts, yticklabels=middle_parts)
     plt.title("SVCCA Coefficients Heatmap")
@@ -352,10 +354,9 @@ def run_tests_all(files):
 
 
 #file_names = ["activations_matrix_house.npy","activations_matrix_rap.npy","activations_matrix_rock.npy","activations_matrix_rock1.npy"]
-filename1 = "activations_matrix_rock.npy"
-filename2 = "activations_matrix_rock1.npy"
 
-activation_path ='/homes/areichard/Desktop/ml-final/layer_activations/'
+
+activation_path ='/homes/areichard/Desktop/ml-final/onevsone_activations/'
 pretraining = os.listdir(activation_path)
 file_names = []
 
@@ -363,29 +364,77 @@ for i in pretraining:
     file_names.append(activation_path + i)
 
 
-# act1 = load_npy_file(filename1)
-# act2 = load_npy_file(filename2)
+#acts1 = load_npy_file(file_names[0])
+#acts2 = load_npy_file(file_names[1])
 #
 #
-# f_acts1, f_acts2 = process_data(act1,act2)
+#f_acts1, f_acts2 = process_data(acts1,acts2)
 #
-# svcca_results = get_SVCCA(f_acts1,f_acts2)
+#svcca_results = get_SVCCA(f_acts1,f_acts2)
 #
+#return_dict = svcca_results
 
 
-# # Load .npy files as NumPy arrays
-#
-#
-#
-# print("SVCCA shape", svcca_results["cca_dirns1"].shape)
-#
-# graph_top_svcca_directions(svcca_results)
+#acts1_reshaped = f_acts1
+#acts2_reshaped = f_acts2
+
+# Compute the CCA-transformed input matrices using the CCA coefficients
 
 
-run_tests_all(file_names)
+#print("shapes", acts1.shape,acts2.shape)
+#run_tests_all(file_names)
 
 
-print("MNIST", np.mean(svcca_results["cca_coef1"]))
+#print("MNIST", np.mean(svcca_results["cca_coef1"]))
 #
 # # Plot the results
 # _plot_helper(svcca_results["cca_coef1"], "CCA Coef idx", "CCA coef value")
+
+
+
+def data_cor(acts1, acts2, num_data, shape):
+    all_cor = []
+
+    compare_these = []
+    indexing = []
+    mmapped_array1 = np.memmap(acts1, mode='r', dtype='float32')
+    mmapped_array2 = np.memmap(acts2, mode='r', dtype='float32')
+    for i in range(num_data):
+
+
+
+
+        p, q, r = shape
+
+
+        single_matrix_size = p * q * r
+
+        start_index = i * single_matrix_size
+
+        end_index = start_index + single_matrix_size
+
+        acts1 = mmapped_array1[start_index:end_index].reshape((1, p, q, r))
+        acts2 = mmapped_array2[start_index:end_index].reshape((1, p, q, r))
+
+        f_acts1, f_acts2 = process_data(acts1,acts2)
+
+        svcca_results = get_SVCCA(f_acts1,f_acts2)
+        all_cor.append(np.mean(svcca_results["cca_coef1"]))
+        print("len\n" , len(all_cor))
+        indexing.append(i)
+    return all_cor, indexing
+
+# activation_path ='/homes/areichard/Desktop/ml-final/layer_activations/'
+# pretraining = os.listdir(activation_path)
+#
+# for i in pretraining:
+#     file_names.append(activation_path + i)
+acts1 = load_npy_file("onevsone_activations_house_vs_jazz0_ready.npy")
+acts2 = load_npy_file()
+files = []
+num_data = 100
+shape = (29, 192, 64)
+our_list, index = data_cor(acts1,acts2, num_data,shape)
+#print("we have the following value, index pairs", our_list, index)
+sorted_list = np.sort(our_list)
+print("my sorted alements", sorted_list)

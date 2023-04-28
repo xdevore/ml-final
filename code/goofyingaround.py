@@ -17,12 +17,13 @@ import cv2
 
 def activation_maker(activation_model,test_data):
     data = test_data
-    activations = []
+    #print("the sahep", data.shape)
+
 
 
     activation_batch = activation_model.predict(data)
-    activations.append(activation_batch.tolist())
-    return activations
+
+    return activation_batch
 
 
 def get_layer(model_file, layer_name):
@@ -66,8 +67,9 @@ def process_file(file_path,size):
     # Add an extra dimension to make it (1, 64, 192, 3)
     image = np.expand_dims(image, axis=0)
 
+
     return image
-models_path ='/homes/areichard/Desktop/ml-final/models/'
+models_path ='/homes/areichard/Desktop/ml-final/onevsone_models/'
 pretraining = os.listdir(models_path)
 pretrained_cnns = []
 
@@ -75,10 +77,12 @@ for i in pretraining:
     pretrained_cnns.append(models_path + i)
 print(pretrained_cnns)
 
+pretrained_cnns = ["/homes/areichard/Desktop/ml-final/onevsone_models/house_vs_jazz0_genre_classifier.h5", "/homes/areichard/Desktop/ml-final/onevsone_models/house_vs_jazz0_genre_classifier.h5"]
 
 
-pretrained_cnn1 = load_model('rock_genre_classifier2.h5')
-pretrained_cnn2 = load_model('rock_genre_classifier.h5')
+
+#pretrained_cnn1 = load_model('rock_genre_classifier2.h5')
+#pretrained_cnn2 = load_model('rock_genre_classifier.h5')
 
 folder_paths = ['../data/test/house_test_specs', '../data/test/rap_test_specs', '../data/test/rock_test_specs', '../data/test/jazz_test_specs']
 num_files = 100
@@ -94,17 +98,22 @@ layer_num = -2
 target_size = (64, 192)
 for cnn in pretrained_cnns:
     layer_num = layer_num +3
+    activations = []
     for file in selected_files:
 
 
         p_file = process_file(file, target_size)
         activation_layer = get_layer(cnn, layer_name + str(layer_num))
-        activations = activation_maker(activation_layer,p_file)
+        activation_batch = activation_maker(activation_layer,p_file)
+        activations.append(activation_batch.tolist())
 
     activations = np.array(activations)
     activations_matrix = np.vstack(activations)
-    split_path = cnn.split("/")
-    file_split = split_path[6].split("_")
-    new_file_name = file_split[0]
+    print(activations_matrix.shape)
+#    print("MAKETHISSEEENNNN_____________________________________________________\n\n\n", activations.shape)
+    splitting = cnn.split("/")
+    file_split = splitting[-1].split("_")
 
-    np.save('/homes/areichard/Desktop/ml-final/layer_activations/activations_matrix_' + new_file_name + cnn[-4], activations_matrix)
+
+    #np.save('/homes/areichard/Desktop/ml-final/onevsone_activations/onevsone_activations_' + file_split[0] + "_vs_" + file_split[2] + "_ready", activations_matrix)
+    np.save('onevsone_activations_' + file_split[0] + "_vs_" + file_split[2] + "_ready", activations_matrix)

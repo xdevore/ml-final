@@ -8,8 +8,8 @@ from custom_generator import *
 #-----------------------------------------------------------
 # Assuming your pretrained CNN is saved as 'pretrained_cnn.h5'
 print("1")
-pretrained_cnn1 = load_model('rock_genre_classifier2.h5')
-pretrained_cnn2 = load_model('rock_genre_classifier.h5')
+pretrained_cnn1 = load_model('/homes/areichard/Desktop/ml-final/onevsone_models/house_vs_jazz1_genre_classifier.h5')
+pretrained_cnn2 = load_model('/homes/areichard/Desktop/ml-final/onevsone_models/rap_vs_rock1_genre_classifier.h5')
 
 # Specify the layer name you want to get the activations from
 layer_name = 'conv2d_1'
@@ -18,14 +18,13 @@ layer_name = 'conv2d_1'
 print("2")
 layer_output1 = None
 layer_output2 = None
-for layer_cnn1, layer_cnn2 in zip(pretrained_cnn1.layers,pretrained_cnn2.layers):
-    if layer_cnn1.name == layer_name:
-        layer_output1 = layer_cnn1.output
-        layer_output2 = layer_cnn2.output
-        break
-print("output shape of single",layer_output1.shape,layer_output2.shape)
-if layer_output1 is None:
-    raise ValueError(f"Layer with name '{layer_name}' not found in the model.")
+
+
+layer_output1 = pretrained_cnn1.layers[2]
+layer_output2 = pretrained_cnn2.layers[2]
+
+
+
 
 # Create a new model that outputs the activations from the desired layer
 print("3")
@@ -48,7 +47,7 @@ print("made ittt")
 # Run activations through the pretrained CNN on 1000 test examples
 activations1 = []
 activations2 = []
-num_batches = 500 // batch_size
+num_batches = 80 // batch_size
 print("5")
 for i in range(num_batches):
 
@@ -64,10 +63,10 @@ activations2 = np.array(activations2)
 # Stack activations on top of each other as a matrix
 activations_matrix1 = np.vstack(activations1)
 activations_matrix2 = np.vstack(activations2)
-
+print("what is your shape", activations_matrix1.shape)
 # Save the activations matrix
-np.save('activations_matrix_rock2.npy', activations_matrix1)
-np.save('activations_matrix_rock.npy', activations_matrix2)
+np.save('activations_matrix1.npy', activations_matrix1)
+np.save('activations_matrix2.npy', activations_matrix2)
 # chunk_size = 50
 # num_chunks = num_batches // chunk_size
 #

@@ -8,12 +8,12 @@ from tensorflow.keras.preprocessing import image
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 # Load the pre-trained model
-model = load_model('rock_genre_classifier4.h5')
+model = load_model('/homes/xdevore/ml-final-project/ml-final/onevsone_models/rap_vs_rock0_genre_classifier.h5')
 print(model.summary())
 # Define image dimensions and genre folders
 IMG_HEIGHT = 64
 IMG_WIDTH = 192
-genre_folders = ['house_test_specs', 'jazz_test_specs', 'rap_test_specs', 'rock_test_specs']
+genre_folders = ['rap_test_specs', 'rock_test_specs']
 
 # Define test data folder
 test_data_folder = '/homes/xdevore/ml-final-project/ml-final/data/test'
@@ -38,7 +38,8 @@ for genre in genre_folders:
         img_array = preprocess_spectrogram(img_path)
 
         prediction = model.predict(img_array)
-        is_rock = prediction[0][0] > 0.5
+
+        is_rock = prediction[0][0] < 0.5
 
         if genre == 'rock_test_specs' and is_rock:
             correct_predictions += 1

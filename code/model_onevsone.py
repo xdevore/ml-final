@@ -61,10 +61,6 @@ for i in range(len(genre_list)):
 
             model.compile(optimizer=Adam(learning_rate=0.0001), loss='binary_crossentropy', metrics=['accuracy'])
 
-            tf.keras.utils.plot_model(model, to_file='model1.png')
-
-            print("written")
-
             model_name = specified_genre + '_vs_' + other_genre + '_best_model_' + str(k) + '.h5'
             checkpoint = ModelCheckpoint(model_name, save_best_only=True, monitor='val_accuracy', mode='max', verbose=1)
 
@@ -76,9 +72,6 @@ for i in range(len(genre_list)):
                 epochs=11,
                 callbacks=[checkpoint]
             )
-
-            plt.show()
-
 
             model_name = specified_genre + '_vs_' + other_genre + str(k) + '_genre_classifier.h5'
 
